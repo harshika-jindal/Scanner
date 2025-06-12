@@ -1,26 +1,28 @@
-# Scanner
-Homework 2: Lexical Analyzer
-```
+# Scanner 
+### Homework 2: Lexical Analyzer
 
-Description: Implementatiom of lexical analyzer for the programming language PL/0. Program reads a source program written in
+### Description: 
+Implementatiom of lexical analyzer for the programming language PL/0. Program reads a source program written in
 PL/0, identifies some errors, and produces an output: source program, lexeme table, and the token list.
 
-Compilation Instructions:
+#### Compilation Instructions:   
 lex.c./arg[1]
 
-Usage:
+#### Usage:
 The required argument is the input file, where the source program will be read from. 
 
-Example:
+#### Example:
+
 Input File:
+```
 var x, y;
 begin
 y := 3;
 x := y + 56;
 end
-
+```
 Output File:
-               
+```           
 Source Program:
 var x, y;
 begin
