@@ -1,5 +1,5 @@
 # Scanner
-
+```
 Homework 2: Lexical Analyzer
 
 Description: Implementatiom of lexical analyzer for the programming language PL/0. Program reads a source program written in
@@ -52,3 +52,4 @@ end   22
 
 Token List:
 29 2 x 17 2 y 18 21 2 y 20 3 3 18 2 x 20 2 y 4 3 56 18 22 19
+```
