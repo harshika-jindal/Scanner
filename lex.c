@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <string.h
+#include <string.h>
 
 
 #define MAX_ID_LEN 11
@@ -18,35 +18,35 @@ readsym = 32, elsesym = 33
 
 } tokenType;
 
+int hasError = 0;
 
 // reserved words
 
-typedef char *words[]
-{
+const char *reservedWords[] = {
     "const", "var", "procedure", "call", "begin", "end", "if",
-     "fi", "then", "else", "while", "do", "read","write"
-}
-reservedWords;
+    "fi", "then", "else", "while", "do", "read", "write"
+};
+// reserved words symbols
+
+const int reservedTokens[] = {
+    constsym, varsym, procsym, callsym, beginsym, endsym, ifsym,
+    fisym, thensym, elsesym, whilesym, dosym, readsym, writesym
+};
 
 //special Symbols
 
-char symbols[] = {'+', '-', '*', '/', '(', ')', '=', ',','.', '<', '>', ';' , ':'};
+const char symbols[] = {
+    '+', '-', '*', '/', '(', ')', '=', ',', '.', '<', '>', ';', ':'
+};
 
 
-int isLetter(char input){
-    if isalpha(input)
-        return 1;
-
-    return 0;
+int isLetter(char c) {
+    return isalpha(c);
 }
 
-int isnumber(char input){
-    if isdigit(input)
-        return 1;
-
-    return 0;
+int isNumber(char c) {
+    return isdigit(c);
 }
-
 //returns 1 if a character is a special symbol, 0 otherwise
 
 int isASpecialSymbol(char input)
@@ -59,6 +59,176 @@ int isASpecialSymbol(char input)
     }
     return 0;
 }
+
+// scans the source file for tokens and prints both the lexeme table and token list.
+void scanTokens(FILE *input) {
+    char buffer[MAX_LINE_LEN];
+
+    printf("\nLexeme Table:\n\nlexeme\t\ttoken type\n");
+
+    while (fgets(buffer, sizeof(buffer), input)) {
+        int i = 0;
+        while (buffer[i] != '\0') {
+            char c = buffer[i];
+
+            // checks for white space
+            if (isspace(c)) { i++; 
+            continue; 
+            }
+
+            //processes identifiers and reserved words.
+            if (isLetter(c)) {
+                char id[100]; int j = 0;
+                while (isLetter(buffer[i]) || isNumber(buffer[i])) {
+                    if (j < 99) id[j++] = buffer[i];
+                    i++;
+                }
+                id[j] = '\0';
+                if (strlen(id) > MAX_ID_LEN) {
+                    printf("%s\t\tError: Identifier too long\n", id); hasError = 1;
+                } else {
+                    int token = isReservedWord(id);
+
+                    if (token) printf("%s\t\t%d\n", id, token);
+
+                    else printf("%s\t\t%d\n", id, identsym);
+                }
+
+                continue;
+            }
+            // handles numeric literals and checks their length.
+            if (isNumber(c)) {
+                char num[100]; int j = 0;
+                while (isNumber(buffer[i])) {
+                    if (j < 99) num[j++] = buffer[i];
+                    i++;
+                }
+                num[j] = '\0';
+                if (strlen(num) > MAX_NUM_LEN) {
+                    printf("%s\t\tError: Number too long\n", num); hasError = 1;
+                } else {
+                    printf("%s\t\t%d\n", num, numbersym);
+                }
+                continue;
+            }
+            //  handles special symbols.
+            switch (c) {
+
+                case '+': printf("+\t\t%d\n", plussym); break;
+                case '-': printf("-\t\t%d\n", minussym); break;
+                case '*': printf("*\t\t%d\n", multsym); break;
+                case '/': printf("/\t\t%d\n", slashsym); break;
+                case '(': printf("(\t\t%d\n", lparentsym); break;
+                case ')': printf(")\t\t%d\n", rparentsym); break;
+                case '=': printf("=\t\t%d\n", eqlsym); break;
+                case ',': printf(",\t\t%d\n", commasym); break;
+                case '.': printf(".\t\t%d\n", periodsym); break;
+                case '<':
+                    if (buffer[i+1] == '=') { printf("<=\t\t%d\n", leqsym); i++; }
+                    else if (buffer[i+1] == '>') { printf("<>\t\t%d\n", neqsym); i++; }
+                    else { printf("<\t\t%d\n", lessym); }
+                    break;
+
+                case '>':
+                    if (buffer[i+1] == '=') { printf(">=\t\t%d\n", geqsym); i++; }
+                    else { printf(">\t\t%d\n", gtrsym); }
+                    break;
+
+                case ';': printf(";\t\t%d\n", semicolonsym); break;
+                
+                case ':':
+                    if (buffer[i+1] == '=') { printf(":=\t\t%d\n", becomessym); i++; }
+                    else { printf(":\t\tError: invalid symbol\n"); hasError = 1; }
+                    break;
+                default:
+                    printf("%c\t\tError: invalid symbol\n", c); hasError = 1; break;
+            }
+            i++;
+        }
+    }
+
+    if (!hasError) {
+        rewind(input);
+        printf("\nToken List:\n");
+        while (fgets(buffer, sizeof(buffer), input)) {
+            int i = 0;
+            while (buffer[i] != '\0') {
+                char c = buffer[i];
+                if (isspace(c)) { i++; continue; }
+
+                if (isLetter(c)) {
+                    char id[100]; int j = 0;
+                    while (isLetter(buffer[i]) || isNumber(buffer[i])) {
+                        if (j < 99) id[j++] = buffer[i];
+                        i++;
+                    }
+                    id[j] = '\0';
+                    int token = isReservedWord(id);
+                    if (token) printf("%d ", token);
+                    else printf("%d %s ", identsym, id);
+                    continue;
+                }
+
+                if (isNumber(c)) {
+                    char num[100]; int j = 0;
+                    while (isNumber(buffer[i])) {
+                        if (j < 99) num[j++] = buffer[i];
+                        i++;
+                    }
+                    num[j] = '\0';
+                    printf("%d %s ", numbersym, num);
+                    continue;
+                }
+
+                switch (c) {
+                    case '+': printf("%d ", plussym); break;
+                    case '-': printf("%d ", minussym); break;
+                    case '*': printf("%d ", multsym); break;
+                    case '/': printf("%d ", slashsym); break;
+                    case '(': printf("%d ", lparentsym); break;
+                    case ')': printf("%d ", rparentsym); break;
+                    case '=': printf("%d ", eqlsym); break;
+                    case ',': printf("%d ", commasym); break;
+                    case '.': printf("%d ", periodsym); break;
+                    case '<':
+                        if (buffer[i+1] == '=') { printf("%d ", leqsym); i++; }
+                        else if (buffer[i+1] == '>') { printf("%d ", neqsym); i++; }
+                        else { printf("%d ", lessym); }
+                        break;
+                    case '>':
+                        if (buffer[i+1] == '=') { printf("%d ", geqsym); i++; }
+                        else { printf("%d ", gtrsym); }
+                        break;
+                    case ';': printf("%d ", semicolonsym); break;
+                    case ':':
+                        if (buffer[i+1] == '=') { printf("%d ", becomessym); i++; }
+                        break;
+                }
+                i++;
+            }
+        }
+        printf("\n");
+    }
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <input_file>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *input = fopen(argv[1], "r");
+    if (!input) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    printSourceProgram(input);
+    scanTokens(input);
+    fclose(input);
+    return 0;
+}
+
 
 
 
