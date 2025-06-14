@@ -74,7 +74,7 @@ void printSourceProgram(FILE *input) {
 
 //reserved words
 //const, var, procedure, call, begin, end, if, fi, then, else, while, do, read, write
-int isReservedWord(const char* id) {
+int isReservedWord(char* id) {
     if (strcmp(id, "const") == 0) return constsym;
     if (strcmp(id, "var") == 0) return varsym;
     if (strcmp(id, "procedure") == 0) return procsym;
