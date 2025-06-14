@@ -1,4 +1,4 @@
-// Sophia Kropivnitskaia
+// Sophia Kropivnitskaia and Harshika Jindal
 // Course: Systems Software
 // Semester: Summer 2025
 // HW 2
