@@ -193,7 +193,7 @@ void scanTokens(FILE *input) {
                     else { printf(":\t\tError: invalid symbol\n"); hasError = 1; }
                     break;
                 default:
-                    printf("%c\t\tError: invalid symbol\n", c); hasError = 1; break;
+                    printf("\t\tError: invalid symbol \"%c\"\n", c); hasError = 1; break;
             }
             i++;
         }
