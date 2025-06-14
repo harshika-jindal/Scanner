@@ -59,6 +59,16 @@ int isASpecialSymbol(char input)
     }
     return 0;
 }
+void printSourceProgram(FILE *input) {
+    char buffer[MAX_LINE_LEN];
+    printf("Source Program:\n");
+    rewind(input);
+    while (fgets(buffer, sizeof(buffer), input)) {
+        printf("%s", buffer);
+    }
+    rewind(input);
+    
+}
 
 // scans the source file for tokens and prints both the lexeme table and token list.
 void scanTokens(FILE *input) {
