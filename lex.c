@@ -3,31 +3,26 @@
 // Semester: Summer 2025
 // HW 2
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
-
-typedef enum {
-    skipsym = 1, identsym = 2, numbersym = 3, plussym = 4, minussym = 5,
-    multsym = 6, slashsym = 7, fisym = 8, eqsym = 9, neqsym = 10, lessym = 11, leqsym = 12,
-    gtrsym = 13, geqsym = 14, lparentsym = 15, rparentsym = 16, commasym = 17, semicolonsym = 18,
-    periodsym = 19, becomessym = 20, beginsym = 21, endsym = 22, ifsym = 23, thensym = 24,
-    whilesym = 25, dosym = 26, callsym = 27, constsym = 28, varsym = 29, procsym = 30, writesym = 31,
-    readsym = 32 , elsesym = 33
-
-} token_type;
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
 #define MAX_ID_LEN 11
 #define MAX_NUM_LEN 5
-#define MAX 50000
 #define MAX_LINE_LEN 256
+
+typedef enum {
+    skipsym = 1, identsym = 2, numbersym = 3, plussym = 4, minussym = 5, 
+    multsym = 6,  slashsym = 7, fisym = 8,  eqlsym = 9, neqsym = 10, lessym = 11, leqsym = 12, gtrsym = 13, geqsym = 14, lparentsym = 15, rparentsym = 16, commasym = 17, semicolonsym = 18, periodsym = 19, becomessym = 20, 
+    beginsym = 21, endsym = 22, ifsym = 23, thensym = 24, whilesym = 25, dosym = 26, callsym = 27, constsym = 28, varsym = 29, procsym = 30, writesym = 31, 
+    readsym = 32, elsesym = 33
+
+} tokenType;
 
 int hasError = 0;
 
-int tokens[MAX];
-int tokenSize = 0;
-
+// reserved words
 const char *reservedWords[] = {
     "const", "var", "procedure", "call", "begin", "end", "if",
     "fi", "then", "else", "while", "do", "read", "write"
@@ -45,11 +40,13 @@ const char symbols[] = {
 };
 
 
-int isLetter(char c) {
+int isLetter(char c) 
+{
     return isalpha(c);
 }
 
-int isNumber(char c) {
+int isNumber(char c) 
+{
     return isdigit(c);
 }
 
@@ -64,170 +61,232 @@ int isASpecialSymbol(char input)
     }
     return 0;
 }
-
-int main(int argc, char* argv[])
-{
-    //char* InputFile = argv[1];
-    char* InputFile = "input.txt";
-    FILE *input_f = fopen(InputFile, "r");
-    FILE *output_f = fopen("output.txt", "w");
-
-    char ch;
-    char buffer[MAX]; //without white space
-    int size = 0;
-    int i = 0;
-
-    while (fscanf(input_f, "%c", &ch) != EOF)
-    {
-        buffer[i++] = ch;
-        size++;
-    }
-
-    //print the sourse program 
+void printSourceProgram(FILE *input) {
+    char buffer[MAX_LINE_LEN];
     printf("Source Program:\n");
-    printf(buffer);
-    printf("\n");
-    fprintf(output_f, "Source Program:\n%s\n", buffer); 
+    rewind(input);
+    while (fgets(buffer, sizeof(buffer), input)) {
+        printf("%s", buffer);
+    }
+    rewind(input);
+    
+}
 
-    fclose(input_f);
+//reserved words
+//const, var, procedure, call, begin, end, if, fi, then, else, while, do, read, write
+int isReservedWord(const char* id) {
+    if (strcmp(id, "const") == 0) return constsym;
+    if (strcmp(id, "var") == 0) return varsym;
+    if (strcmp(id, "procedure") == 0) return procsym;
+    if (strcmp(id, "call") == 0) return callsym;
+    if (strcmp(id, "begin") == 0) return beginsym;
+    if (strcmp(id, "end") == 0) return endsym;
+    if (strcmp(id, "if") == 0) return ifsym;
+    if (strcmp(id, "then") == 0) return thensym;
+    if (strcmp(id, "fi") == 0) return fisym;
+    if (strcmp(id, "else") == 0) return elsesym;
+    if (strcmp(id, "while") == 0) return whilesym;
+    if (strcmp(id, "do") == 0) return dosym;
+    if (strcmp(id, "read") == 0) return readsym;
+    if (strcmp(id, "write") == 0) return writesym;
+    return 0; // not a reserved word
+}
 
-    //accounting for comments
-    for (i = 0; i < size; i++) 
-    {
-        if (buffer[i] == '/' && buffer[i + 1] == '*') 
-        {
-            int j = i + 2;
+// scans the source file for tokens and prints both the lexeme table and token list.
+void scanTokens(FILE *input) {
+    char buffer[MAX_LINE_LEN];
 
-            while (!(buffer[j] == '*' && buffer[j + 1] == '/')) 
-            {
-                j++;
+    printf("\nLexeme Table:\n\nlexeme\t\ttoken type\n");
+
+    while (fgets(buffer, sizeof(buffer), input)) {
+        int i = 0;
+        while (buffer[i] != '\0') {
+            char c = buffer[i];
+
+            // checks for white space
+            if (isspace(c)) { 
+                i++; 
+                continue; 
             }
-            i = j + 2;
-            continue;
-        }
 
-        if (buffer[i] == '\n') 
-        {
-            continue;
-        }
-        if (buffer[i] == ' ') 
-        {
-            continue;
-        }
-        if (buffer[i] == '\t') 
-        {
-            continue;
-        }
+            if (buffer[i] == '/' && buffer[i + 1] == '*') {
+                int j = i + 2;
 
-        //reserved words
-        //const, var, procedure, call, begin, end, if, fi, then, else, while, do, read, write
-        if (buffer[i] >= 'a' && buffer[i] <= 'z') {
-            switch ((int) buffer[i]) {
-                case (int) 'c':
-                    if ((buffer[i+1] == 'o') && (buffer[i+2] == 'n') && (buffer[i+3] == 's') && (buffer[i+4] == 't')) {
-                        i+=4;
-                        tokens[tokenSize] = constsym;
-                        tokenSize++;
-                        continue;
-                    }
-                    else if ((buffer[i+1] == 'a') && (buffer[i+2] == 'l') && (buffer[i+3] == 'l')) {
-                        i+=3;
-                        tokens[tokenSize] = callsym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 'v':
-                    if((buffer[i+1] == 'a') && (buffer[i+2] == 'r')) {
-						i+=2;
-						tokens[tokenSize] = varsym;
-						tokenSize++;
-						continue;
-					}
-                case (int) 'p':
-                    if ((buffer[i+1] == 'r') && (buffer[i+2] == 'o') && (buffer[i+3] == 'c') && (buffer[i+4] == 'e') && (buffer[i+5] == 'd') && (buffer[i+6] == 'u') && (buffer[i+7] == 'r') && (buffer[i+8] == 'e')) {
-                        i+=8;
-                        tokens[tokenSize] = procsym;
-                        tokenSize++;
-                        continue;
-                    }    
-                case (int) 'b':
-                    if ((buffer[i+1] == 'e') && (buffer[i+2] == 'g') && (buffer[i+3] == 'i') && (buffer[i+4] == 'n')) {
-                        i += 4;
-                        tokens[tokenSize] = beginsym;
-                        tokenSize++;
-                        continue;
-                    }
-                
-                case (int) 'e':
-                    if ((buffer[i+1] == 'n') && (buffer[i+2] == 'd')) {
-                        i+=2;
-                        tokens[tokenSize] = endsym;
-                        tokenSize++;
-                        continue;
-                    }
-                    else if ((buffer[i+1] == 'l') && (buffer[i+2] == 's') && (buffer[i+3] == 'e')) {
-                        i+=3;
-                        tokens[tokenSize] = elsesym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 'i':
-                    if (buffer[i+1] == 'f') {
-                        i += 1;
-                        tokens[tokenSize] = ifsym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 't':
-                    if ((buffer[i+1] == 'h') && (buffer[i+2] == 'e') && (buffer[i+3] == 'n')) {
-                        i += 3;
-                        tokens[tokenSize] = thensym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 'w':
-                    if ((buffer[i+1] == 'h') && (buffer[i+2] == 'i') && (buffer[i+3] == 'l') && (buffer[i+4] == 'e')) {
-                        i += 4;
-                        tokens[tokenSize] = whilesym;
-                        tokenSize++;
-                        continue;
-                    }
-                    else if ((buffer[i+1] == 'r') && (buffer[i+2] == 'i') && (buffer[i+3] == 't') && (buffer[i+4] == 'e')) {
-                        i += 4;
-                        tokens[tokenSize] = writesym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 'd':
-                    if (buffer[i+1] == 'o') {
-                        i+=1;
-                        tokens[tokenSize] = dosym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 'o':
-                    if ((buffer[i+1] == 'd') && (buffer[i+2] == 'd')) {
-                        i+=2;
-                        tokens[tokenSize] = fisym;
-                        tokenSize++;
-                        continue;
-                    }
-                case (int) 'r':
-                    if ((buffer[i+1] == 'e') && (buffer[i+2] == 'a') && (buffer[i+3] == 'd')) {
-                        i+=3;
-                        tokens[tokenSize] = readsym;
-                        tokenSize++;
-                        continue;
-                    }
+                while (!(buffer[j] == '*' && buffer[j + 1] == '/')) 
+                {
+                    j++;
+                }
+                i = j + 2;
+                continue;
+            }
 
-                //if it's not a reserved word
-                default:
+            //processes identifiers and reserved words.
+            if (isLetter(c)) {
+                char id[100]; 
+                int j = 0;
+                while (isLetter(buffer[i]) || isNumber(buffer[i])) 
+                {
+                    if (j < 99) id[j++] = buffer[i];
+                    i++;
+                }
+                id[j] = '\0';
+
+                if (strlen(id) > MAX_ID_LEN) {
+                    printf("%s\t\tError: Identifier too long\n", id); 
+                    hasError = 1;
+                } else {
+                    int token = isReservedWord(id);
+
+                    if (token) printf("%s\t\t%d\n", id, token);
+
+                    else printf("%s\t\t%d\n", id, identsym);
+                }
+
+                continue;
+            }
+            // handles numeric literals and checks their length.
+            if (isNumber(c)) {
+                char num[100]; 
+                int j = 0;
+                while (isNumber(buffer[i])) 
+                {
+                    if (j < 99) num[j++] = buffer[i];
+                    i++;
+                }
+                num[j] = '\0';
+                if (strlen(num) > MAX_NUM_LEN) {
+                    printf("%s\t\tError: Number too long\n", num); 
+                    hasError = 1;
+                } else {
+                    printf("%s\t\t%d\n", num, numbersym);
+                }
+                continue;
+            }
+
+            //  handles special symbols.
+            switch (c) {
+
+                case '+': printf("+\t\t%d\n", plussym); break;
+                case '-': printf("-\t\t%d\n", minussym); break;
+                case '*': printf("*\t\t%d\n", multsym); break;
+                case '/': printf("/\t\t%d\n", slashsym); break;
+                case '(': printf("(\t\t%d\n", lparentsym); break;
+                case ')': printf(")\t\t%d\n", rparentsym); break;
+                case '=': printf("=\t\t%d\n", eqlsym); break;
+                case ',': printf(",\t\t%d\n", commasym); break;
+                case '.': printf(".\t\t%d\n", periodsym); break;
+                case '<':
+                    if (buffer[i+1] == '=') { printf("<=\t\t%d\n", leqsym); i++; }
+                    else if (buffer[i+1] == '>') { printf("<>\t\t%d\n", neqsym); i++; }
+                    else { printf("<\t\t%d\n", lessym); }
                     break;
+
+                case '>':
+                    if (buffer[i+1] == '=') { printf(">=\t\t%d\n", geqsym); i++; }
+                    else { printf(">\t\t%d\n", gtrsym); }
+                    break;
+
+                case ';': printf(";\t\t%d\n", semicolonsym); break;
+                
+                case ':':
+                    if (buffer[i+1] == '=') { printf(":=\t\t%d\n", becomessym); i++; }
+                    else { printf(":\t\tError: invalid symbol\n"); hasError = 1; }
+                    break;
+                default:
+                    printf("%c\t\tError: invalid symbol\n", c); hasError = 1; break;
             }
+            i++;
         }
     }
 
-    //Print output statements 
-    printf("Lexeme Table:\n");
-    printf("\nlexemetoken\ttype\n");
+    if (!hasError) {
+        rewind(input);
+        printf("\nToken List:\n");
+        while (fgets(buffer, sizeof(buffer), input)) 
+        {
+            int i = 0;
+            while (buffer[i] != '\0') 
+            {
+                char c = buffer[i];
+                if (isspace(c)) {
+                    i++; 
+                    continue; 
+                }
+
+                if (isLetter(c)) {
+                    char id[100]; int j = 0;
+                    while (isLetter(buffer[i]) || isNumber(buffer[i])) 
+                    {
+                        if (j < 99) id[j++] = buffer[i];
+                        i++;
+                    }
+                    id[j] = '\0';
+                    int token = isReservedWord(id);
+                    if (token) printf("%d ", token);
+                    else printf("%d %s ", identsym, id);
+                    continue;
+                }
+
+                if (isNumber(c)) {
+                    char num[100]; int j = 0;
+                    while (isNumber(buffer[i])) 
+                    {
+                        if (j < 99) num[j++] = buffer[i];
+                        i++;
+                    }
+                    num[j] = '\0';
+                    printf("%d %s ", numbersym, num);
+                    continue;
+                }
+
+                switch (c) {
+                    case '+': printf("%d ", plussym); break;
+                    case '-': printf("%d ", minussym); break;
+                    case '*': printf("%d ", multsym); break;
+                    case '/': printf("%d ", slashsym); break;
+                    case '(': printf("%d ", lparentsym); break;
+                    case ')': printf("%d ", rparentsym); break;
+                    case '=': printf("%d ", eqlsym); break;
+                    case ',': printf("%d ", commasym); break;
+                    case '.': printf("%d ", periodsym); break;
+                    case '<':
+                        if (buffer[i+1] == '=') { printf("%d ", leqsym); i++; }
+                        else if (buffer[i+1] == '>') { printf("%d ", neqsym); i++; }
+                        else { printf("%d ", lessym); }
+                        break;
+                    case '>':
+                        if (buffer[i+1] == '=') { printf("%d ", geqsym); i++; }
+                        else { printf("%d ", gtrsym); }
+                        break;
+                    case ';': printf("%d ", semicolonsym); break;
+                    case ':':
+                        if (buffer[i+1] == '=') { printf("%d ", becomessym); i++; }
+                        break;
+                }
+                i++;
+            }
+        }
+        printf("\n");
+    }
+}
+
+int main(int argc, char *argv[]) {
+    
+    if (argc < 2) {
+        printf("Usage: %s <input_file>\n", argv[0]);
+        return 1;
+    }    
+
+    char* InputFile = argv[1];
+    //char* InputFile = "input.txt";
+    FILE *input = fopen(InputFile, "r");
+    if (!input) {
+        perror("Error opening file");
+        return 1;
+    }
+
+    printSourceProgram(input);
+    scanTokens(input);
+    fclose(input);
+    return 0;
 }
