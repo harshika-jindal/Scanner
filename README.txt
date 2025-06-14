@@ -1,7 +1,8 @@
 Homework 2: Lexical Analyzer
+Sophia Kropivnitskaia and Harshika Jindal
 
-Description: Implementatiom of lexical analyzer for the programming language PL/0. Program reads a source program written in
-PL/0, identifies some errors, and produces an output: source program, lexeme table, and the token list.
+Description: Implementation of a lexical analyzer for the programming language PL/0. Program reads a source program written in
+PL/0, identifies some errors and produces an output: source program, lexeme table, and the token list.
 
 Compilation Instructions:
 lex.c./arg[1]
