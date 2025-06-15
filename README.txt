@@ -5,7 +5,8 @@ Description: Implementation of a lexical analyzer for the programming language P
 PL/0, identifies some errors and produces an output: source program, lexeme table, and the token list.
 
 Compilation Instructions:
-lex.c./arg[1]
+gcc lex.c -o lex
+./lex < input.txt > output.txt
 
 Usage:
 The required argument is the input file, where the source program will be read from. 
