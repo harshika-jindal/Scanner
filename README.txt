@@ -6,7 +6,7 @@ PL/0, identifies some errors and produces an output: source program, lexeme tabl
 
 Compilation Instructions:
 gcc lex.c -o lex
-./lex < input.txt > output.txt
+lex.exe input.txt > output.txt
 
 Usage:
 The required argument is the input file, where the source program will be read from. 
